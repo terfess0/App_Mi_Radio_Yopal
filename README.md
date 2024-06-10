@@ -49,12 +49,9 @@
 
 Este proyecto está licenciado bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
 
-## Contacto
+## Soporte/Contacto
 
-Para cualquier pregunta o sugerencia, puedes contactar al desarrollador:
-
-- **Nombre**: Santiago
-- **Correo**: terdevfess@gmail.com
+Para obtener ayuda o reportar problemas, por favor contacta a [santiagofontalvo13@gmail.com](mailto:santiagofontalvo13@gmail.com).
 
 ---
 
