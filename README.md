@@ -53,8 +53,8 @@ Este proyecto está licenciado bajo la Licencia MIT - ver el archivo [LICENSE](L
 
 Para cualquier pregunta o sugerencia, puedes contactar al desarrollador:
 
-- **Nombre**: [Tu Nombre]
-- **Correo**: [tu.correo@example.com]
+- **Nombre**: Santiago
+- **Correo**: terdevfess@gmail.com
 
 ---
 
