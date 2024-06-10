@@ -1,6 +1,6 @@
 # Mi Radio Yopal
 
-¡Bienvenido a Mi Radio Yopal! Esta aplicación para Android te permite sintonizar las emisoras de radio de Yopal mediante URLs de audio por internet. La aplicación está desarrollada en Kotlin usando Android Studio y se encuentra disponible en [Google Play Store](https://play.google.com/store/apps/details?id=com.terfess.busetasyopal&hl=es).
+¡Bienvenido a Mi Radio Yopal! Esta aplicación para Android te permite sintonizar las emisoras de radio de Yopal mediante URLs de audio por internet. La aplicación está desarrollada en Kotlin usando Android Studio y se encuentra disponible en [Google Play Store](https://play.google.com/store/apps/details?id=com.terfess.miradioyopal).
 
 ## Características
 
@@ -60,4 +60,4 @@ Para cualquier pregunta o sugerencia, puedes contactar al desarrollador:
 
 ¡Gracias por usar Mi Radio Yopal!
 
-[Descarga Mi Radio Yopal en Google Play Store](https://play.google.com/store/apps/details?id=com.terfess.busetasyopal&hl=es)
+[Descarga Mi Radio Yopal en Google Play Store](https://play.google.com/store/apps/details?id=com.terfess.miradioyopal)
