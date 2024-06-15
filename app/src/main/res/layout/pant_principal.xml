@@ -48,7 +48,6 @@
 
     <!-- Anuncio -->
     <!-- id admob ejemplo: ca-app-pub-3940256099942544/6300978111 -->
-    <!-- admob verdadero ID: ca-app-pub-8000181315504515/5836851236-->
     <com.google.android.gms.ads.AdView
         android:id="@+id/adView"
         android:layout_width="wrap_content"
