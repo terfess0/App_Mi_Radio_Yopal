@@ -1,0 +1,17 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.MiRadioYopal" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#0B1D49</item>
+        <item name="elevation">1dp</item>
+    </style>
+
+    <style name="Theme.MiRadioYopal" parent="Base.Theme.MiRadioYopal" >
+        <item name="color">@color/color_fondo_dark</item>
+        <item name="titleTextColor">@color/titulo</item>
+    </style>
+
+    <style name="Theme.splash" parent="Theme.SplashScreen.IconBackground">
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="postSplashScreenTheme">@style/Theme.MiRadioYopal</item>
+    </style>
+</resources>

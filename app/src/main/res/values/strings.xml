@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Mi Radio Yopal</string>
+    <string name="radio_unknow">Radio Desconocida</string>
+    <string name="imagen_de_radio">Imagen de Radio</string>
+    <string name="app_mi_radio_yopal_noti">App Mi Radio Yopal</string>
+    <string name="buscando">Buscando...</string>
+    <string name="estas_escuchando">"Estas escuchando "</string>
+    <string name="title_head">Sintoniza la señal de cualquiera de las radios disponibles.</string>
+</resources>

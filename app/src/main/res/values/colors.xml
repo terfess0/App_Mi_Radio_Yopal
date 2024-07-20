@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="titulo">#90ffffff</color>
+    <color name="titulo_black">#90000000</color>
+
+    <color name="enfasis_app">#2E7D32</color>
+    <color name="transparente">#00ffffff</color>
+    <color name="transparenteVerde">#131311</color>
+
+    <color name="color_fondo">#F0F0F0</color>
+    <color name="color_fondo_dark">#232222</color>
+    <color name="color_primario">#2196F3</color>
+    <color name="color_segundario">#607D8B</color>
+
+    <color name="colorBorde">#9A00AEFF</color>
+</resources>

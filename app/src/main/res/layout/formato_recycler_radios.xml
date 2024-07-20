@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/contain_radio"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="5dp"
+    app:layout_constraintDimensionRatio="H,16:9">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardRadio"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="2dp"
+        android:foregroundGravity="left"
+        android:maxWidth="150dp"
+        android:maxHeight="150dp"
+        app:cardCornerRadius="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:context=".actividades.SplashScreen">
+
+        <ImageButton
+            android:id="@+id/station"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="#00F3EE04"
+            android:contentDescription="@string/imagen_de_radio"
+            android:foreground="?android:attr/selectableItemBackground"
+            android:scaleType="matrix"
+            android:src="@drawable/radio_desconocida" />
+
+        <TextView
+            android:id="@+id/nameRadio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:background="#571B1818"
+            android:gravity="center"
+            android:text="@string/radio_unknow"
+            android:textColor="@android:color/white"
+            android:textStyle="bold" />
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,285 @@
+package com.terfess.miradioyopal.actividades
+
+import android.Manifest
+import android.content.ComponentName
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.Player
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import androidx.recyclerview.widget.GridLayoutManager
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.MobileAds
+import com.google.android.material.snackbar.BaseTransientBottomBar
+import com.google.android.material.snackbar.Snackbar
+import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.MoreExecutors
+import com.terfess.miradioyopal.R
+import com.terfess.miradioyopal.databinding.ActivityHomeScreenBinding
+import com.terfess.miradioyopal.recycler_view.AdapterHolderRadios
+import com.terfess.miradioyopal.recycler_view.DatoStationLocal
+import com.terfess.miradioyopal.servicios.AudioService
+import com.terfess.miradioyopal.servicios.BaseSql
+
+class HomeScreen : AppCompatActivity() {
+    lateinit var binding: ActivityHomeScreenBinding
+    private lateinit var controllerFuture: ListenableFuture<MediaController>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        binding = ActivityHomeScreenBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        super.onCreate(savedInstanceState)
+
+        //ads
+        MobileAds.initialize(this) {}
+        val mAdView = binding.adView
+        val adRequest = AdRequest.Builder().build()
+        mAdView.loadAd(adRequest)
+        //
+
+        //base de datos local
+        val db = BaseSql(this)
+        val dataList = db.obtenerListaRadios()
+
+
+        //recycler radios
+        val cajaRadios = binding.cajaRadios
+        cajaRadios.layoutManager = GridLayoutManager(this, 2)
+        cajaRadios.adapter = AdapterHolderRadios(this, dataList, this, binding.root)
+
+        //si android mayor a 13 pedir permiso notificacion
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            pedirPermisoNotificacion()
+        }
+    }
+
+
+    fun starPlayer(radio: DatoStationLocal) {
+        binding.infoReproduccion.visibility = View.VISIBLE
+
+        //crear sessiontoken a audioservicio
+        val sessionToken =
+            SessionToken(this, ComponentName(this, AudioService::class.java))
+
+        controllerFuture =
+            MediaController.Builder(this, sessionToken).buildAsync()
+        controllerFuture.addListener({
+
+            val mediaController = controllerFuture.get()
+
+            //set playlist radios on the player
+            val lista = getListMediaSources()
+            mediaController.setMediaItems(lista)
+
+            //start on selected radio
+            mediaController.seekTo(radio.id - 1, 0)
+
+            mediaController.prepare()
+            mediaController.play()
+
+            //controllers layout
+            val loadProgress = binding.cargando
+            val playButton = binding.play
+
+            playButton.setOnClickListener {
+                if (mediaController.isPlaying) {
+                    mediaController.pause()
+                } else {
+                    mediaController.prepare()
+                    mediaController.play()
+
+                    loadProgress.visibility = View.VISIBLE
+                    playButton.visibility = View.GONE
+                    if (mediaController.isPlaying) {
+                        loadProgress.visibility = View.GONE
+                        playButton.visibility = View.VISIBLE
+                    }
+                }
+            }
+
+            binding.infoReproduccion.visibility = View.VISIBLE
+
+            // Asumiendo que ya tienes un mediaController del tipo ExoPlayer
+            mediaController.addListener(object : Player.Listener {
+
+                override fun onIsPlayingChanged(isPlaying: Boolean) {
+                    if (isPlaying) {
+                        // Active playback.
+                        playButton.setImageResource(R.drawable.ic_pausa)
+
+                        if (!mediaController.isLoading) loadProgress.visibility = View.GONE
+
+                        val mediaData = mediaController.currentMediaItem
+                        textoDireccional(buildString {
+                            append(getString(R.string.estas_escuchando))
+                            append(mediaData?.mediaMetadata?.title)
+                        })
+
+                        binding.infoReproduccion.visibility = View.VISIBLE
+                    } else {
+                        playButton.setImageResource(R.drawable.ic_play)
+
+                        mediaController.stop() //stop each time for at reanudar research the station
+                        mediaController.prepare()
+                        if (mediaController.playWhenReady) {
+                            loadProgress.visibility = View.VISIBLE
+                            playButton.visibility = View.GONE
+                            textoDireccional(getString(R.string.buscando))
+                        }
+                    }
+                }
+
+
+                override fun onPlaybackStateChanged(state: Int) {
+                    // Actualiza la visibilidad del estado de carga cuando cambia el estado de reproducción del reproductor
+                    if (state == Player.STATE_READY && mediaController.isPlaying) {
+                        // El reproductor está listo para reproducir pero aún no ha comenzado
+                        binding.play.visibility = View.VISIBLE
+                        binding.cargando.visibility = View.GONE
+                    }
+
+                    if (state == Player.STATE_ENDED) {
+                        // Verifica si es contenido en vivo y maneja la reproducción
+                        val currentItem = mediaController.currentMediaItem
+                        if (currentItem?.liveConfiguration != null) {
+                            mediaController.seekToDefaultPosition()
+                            mediaController.playWhenReady = true
+                        }
+                        println("Estate ended evitar next")
+                    }
+                }
+
+            })
+
+
+            // MediaController is available here with controllerFuture.get()
+        }, MoreExecutors.directExecutor())
+
+
+    }
+
+    private fun getListMediaSources(): MutableList<MediaItem> {
+        //get radio stations from sql local
+        val list = mutableListOf<MediaItem>()
+
+        val sqlBase = BaseSql(this)
+        val radios = sqlBase.obtenerListaRadios()
+
+        for (id in radios) {
+            val station = MediaItem.Builder()
+                .setUri(id.linkStream)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(id.name)
+                        .setArtist(getString(R.string.app_mi_radio_yopal_noti))
+                        .setArtworkUri(id.photo.toUri())
+                        .build()
+                )
+                .setLiveConfiguration(
+                    MediaItem.LiveConfiguration.Builder()
+                        .setTargetOffsetMs(C.TIME_UNSET)  // Usa el valor predeterminado de ExoPlayer
+                        .setMinPlaybackSpeed(0.95f)      // Configura la velocidad mínima de reproducción
+                        .setMaxPlaybackSpeed(1.05f)      // Configura la velocidad máxima de reproducción
+                        .build()
+                )
+                .build()
+            list.add(station)
+        }
+
+
+        return list
+    }
+
+    fun abrirFacebook(urlPage: String) {
+        //verify link
+        if (urlPage.isNotBlank() && urlPage.isNotEmpty()) {
+            // Intent para abrir la aplicación de Facebook
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.data = Uri.parse("fb://facewebmodal/f?href=$urlPage")
+
+            // Verificar si la aplicación de Facebook está instalada
+            if (intent.resolveActivity(packageManager) != null) {
+                // La aplicación de Facebook está instalada, abrir la página directamente
+                startActivity(intent)
+            } else {
+                // La aplicación de Facebook no está instalada, abrir en el navegador web
+                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(urlPage))
+                startActivity(browserIntent)
+            }
+        } else {
+            val snk = Snackbar.make(
+                binding.root,
+                "No hay página de facebook disponible",
+                Snackbar.LENGTH_LONG
+            )
+            snk.animationMode = BaseTransientBottomBar.ANIMATION_MODE_FADE
+            snk.setBackgroundTint(ContextCompat.getColor(this, R.color.color_segundario))
+            snk.show()
+        }
+    }
+
+
+    // Declare the launcher at the top of your Activity/Fragment:
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // FCM SDK (and your app) can post notifications.
+        } else {
+            Snackbar.ANIMATION_MODE_SLIDE
+            Snackbar.make(
+                binding.root,
+                "No podras recibir notificaciones",
+                Snackbar.LENGTH_LONG
+            )
+                .show()
+        }
+    }
+
+    private fun pedirPermisoNotificacion() {
+        // This is only necessary for API level >= 33 (TIRAMISU)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) ==
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                // FCM SDK (and your app) can post notifications.
+            } else if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+                // TODO: display an educational UI explaining to the user the features that will be enabled
+                //       by them granting the POST_NOTIFICATION permission. This UI should provide the user
+                //       "OK" and "No thanks" buttons. If the user selects "OK," directly request the permission.
+                //       If the user selects "No thanks," allow the user to continue without notifications.
+            } else {
+                // Directly ask for the permission
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    fun textoDireccional(texto: String) {
+        binding.textoHorizontal.text = texto
+        binding.textoHorizontal.isSelected = true
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        //detener el servicio de musica
+        stopService(Intent(this, AudioService::class.java))
+    }
+
+
+}
