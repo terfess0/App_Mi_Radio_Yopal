@@ -6,4 +6,8 @@
     <string name="buscando">Buscando...</string>
     <string name="estas_escuchando">"Estas escuchando "</string>
     <string name="title_head">Sintoniza la señal de cualquiera de las radios disponibles.</string>
+    <string name="error_time_over">Algo ha salido mal, por favor, revisa tu conexión a internet.</string>
+    <string name="error_source_station">Al parecer, la señal de esta radio online (%1$s) está inactiva. Inténtalo más tarde o selecciona otra.</string>
+    <string name="error_base">Algo salió mal, reintentando...</string>
+    <string name="baseTextDireccional">Selecciona una radio</string>
 </resources>

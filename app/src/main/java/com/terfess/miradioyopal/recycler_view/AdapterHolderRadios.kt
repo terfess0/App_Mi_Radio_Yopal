@@ -70,7 +70,7 @@ class AdapterHolderRadios(
 
             // On click Radio
             imgRadio.setOnClickListener {
-//                onSelectRadio(cardRadio)
+                //onSelectRadio(cardRadio)
 
                 binding.cargando.visibility = View.VISIBLE
                 binding.textoHorizontal.text = context.getString(R.string.buscando)

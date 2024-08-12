@@ -73,20 +73,6 @@ class AudioService : MediaSessionService() {
 //            .setCallback(MyCallback())
 //            .setCustomLayout(ImmutableList.of(closeButton))
             .build()
-
-
-
-        //listener for errors
-        player.addListener(object : Player.Listener {
-            override fun onPlayerError(error: PlaybackException) {
-                // Handle playback error, e.g., display an error message or retry logic
-                println("AudioService :: Error playing radio stream: $error")
-                // retrying and evite close noti
-                player.playWhenReady = true
-
-            }
-        })
-
     }
 
 //    private inner class MyCallback : MediaSession.Callback {
@@ -159,8 +145,10 @@ class AudioService : MediaSessionService() {
         if (player.playWhenReady) {
             // Make sure the service is not in foreground.
             player.pause()
+        }else{
+            stopSelf()
         }
-        stopSelf()
+
     }
 
     // allow others elements of the systeam entry at the session media

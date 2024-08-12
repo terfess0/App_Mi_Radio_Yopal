@@ -15,6 +15,7 @@ import androidx.core.net.toUri
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -66,6 +67,8 @@ class HomeScreen : AppCompatActivity() {
 
 
     fun starPlayer(radio: DatoStationLocal) {
+        //hide errorAlert
+        binding.errorAlert.visibility = View.GONE
         binding.infoReproduccion.visibility = View.VISIBLE
 
         //crear sessiontoken a audioservicio
@@ -93,6 +96,9 @@ class HomeScreen : AppCompatActivity() {
             val playButton = binding.play
 
             playButton.setOnClickListener {
+                //hide errorAlert
+                binding.errorAlert.visibility = View.GONE
+
                 if (mediaController.isPlaying) {
                     mediaController.pause()
                 } else {
@@ -110,13 +116,16 @@ class HomeScreen : AppCompatActivity() {
 
             binding.infoReproduccion.visibility = View.VISIBLE
 
-            // Asumiendo que ya tienes un mediaController del tipo ExoPlayer
+
             mediaController.addListener(object : Player.Listener {
 
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
                     if (isPlaying) {
                         // Active playback.
                         playButton.setImageResource(R.drawable.ic_pausa)
+
+                        //hide errorAlert
+                        binding.errorAlert.visibility = View.GONE
 
                         if (!mediaController.isLoading) loadProgress.visibility = View.GONE
 
@@ -160,6 +169,40 @@ class HomeScreen : AppCompatActivity() {
                     }
                 }
 
+                //on player error signal
+                override fun onPlayerError(error: PlaybackException) {
+                    // Imprime el error para depuración
+                    println("AudioService :: Error playing radio stream: ${error.message}")
+
+                    when (error.errorCode) {
+                        PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED -> {
+                            val errorMessage = getString(R.string.error_time_over)
+                            radioError(errorMessage)
+                            mediaController.pause()
+
+                            val text = getString(R.string.baseTextDireccional)
+                            textoDireccional(text)
+                        }
+
+                        PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED -> {
+                            val media = mediaController.currentMediaItem
+                            val nameRadio = media?.mediaMetadata?.title
+                            val errorMessage = getString(R.string.error_source_station, nameRadio)
+                            radioError(errorMessage)
+                            mediaController.pause()
+
+                            val text = getString(R.string.baseTextDireccional)
+                            textoDireccional(text)
+                        }
+
+                        else -> {
+                            val errorMessage = getString(R.string.error_base)
+                            radioError(errorMessage)
+                            mediaController.playWhenReady = true
+                        }
+                    }
+                }
+
             })
 
 
@@ -167,6 +210,21 @@ class HomeScreen : AppCompatActivity() {
         }, MoreExecutors.directExecutor())
 
 
+    }
+
+    private fun radioError(errorMessage: String) {
+        val alert = binding.errorAlert
+
+        alert.visibility = View.GONE
+        alert.text = errorMessage
+        alert.visibility = View.VISIBLE
+
+        val errorBase = getString(R.string.error_base)
+        if (errorMessage != errorBase) {
+            binding.cargando.visibility = View.GONE
+            binding.play.visibility = View.VISIBLE
+            binding.play.setImageResource(R.drawable.ic_play)
+        }
     }
 
     private fun getListMediaSources(): MutableList<MediaItem> {
