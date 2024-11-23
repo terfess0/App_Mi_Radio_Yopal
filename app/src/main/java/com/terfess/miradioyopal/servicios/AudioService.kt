@@ -7,15 +7,8 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import androidx.lifecycle.MutableLiveData
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
-import androidx.media3.common.PlaybackException
-import androidx.media3.common.Player
-import androidx.media3.common.Player.COMMAND_SEEK_TO_NEXT
-import androidx.media3.common.Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM
-import androidx.media3.common.Player.COMMAND_SEEK_TO_PREVIOUS
-import androidx.media3.common.Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
@@ -63,17 +56,18 @@ class AudioService : MediaSessionService() {
             )
             .build()
 
+
         //initialize exoplayer3
         player = ExoPlayer.Builder(this)
             .setLoadControl(loadControl)
             .build()
 
+        player.skipSilenceEnabled = false
+        player.setHandleAudioBecomingNoisy(true)
+
 
         //set created attributes on player
         player.setAudioAttributes(audioAttributes, true)
-
-        //set loadcontrol
-
 
 
         val closeButton =
@@ -83,13 +77,13 @@ class AudioService : MediaSessionService() {
                 .setSessionCommand(customCommandClose)
                 .build()
 
-
         //initialize the media session
         mediaSession = MediaSession.Builder(this, player)
             .setCallback(MyCallback())
             .setCustomLayout(ImmutableList.of(closeButton))
             .build()
     }
+
 
     private inner class MyCallback : MediaSession.Callback {
 
@@ -100,14 +94,6 @@ class AudioService : MediaSessionService() {
         ): MediaSession.ConnectionResult {
             // Set available player and session commands.
             return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
-                .setAvailablePlayerCommands(
-                    MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS.buildUpon()
-                        .add(COMMAND_SEEK_TO_NEXT)
-                        .add(COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
-                        .add(COMMAND_SEEK_TO_PREVIOUS)
-                        .add(COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
-                        .build()
-                )
                 .setAvailableSessionCommands(
                     MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
                         .add(customCommandClose)
@@ -115,7 +101,6 @@ class AudioService : MediaSessionService() {
                 )
                 .build()
         }
-
 
         override fun onCustomCommand(
             session: MediaSession,
@@ -153,6 +138,7 @@ class AudioService : MediaSessionService() {
             val notificationManager =
                 getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
+
         }
     }
 
@@ -161,8 +147,8 @@ class AudioService : MediaSessionService() {
         val player = mediaSession!!.player
         if (player.playWhenReady) {
             // Make sure the service is not in foreground.
-            player.pause()
-        }else{
+            player.prepare()
+        } else {
             stopSelf()
         }
 

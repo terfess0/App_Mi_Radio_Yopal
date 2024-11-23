@@ -22,6 +22,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.recyclerview.widget.GridLayoutManager
@@ -117,6 +118,7 @@ class HomeScreen : AppCompatActivity() {
         controllerFuture =
             MediaController.Builder(this, sessionToken).buildAsync()
 
+
         controllerFuture.addListener({
 
             val mediaController = controllerFuture.get()
@@ -155,9 +157,6 @@ class HomeScreen : AppCompatActivity() {
 
             mediaController.addListener(object : Player.Listener {
 
-                fun myLocalListener() {
-
-                }
 
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
                     if (
@@ -183,6 +182,8 @@ class HomeScreen : AppCompatActivity() {
                             append(getString(R.string.estas_escuchando))
                             append(mediaData?.mediaMetadata?.title)
                         })
+
+                        println("Es live: ${mediaController.isCurrentMediaItemLive}")
 
                         lyReproductor.visibility = View.VISIBLE
                     } else {
@@ -279,6 +280,7 @@ class HomeScreen : AppCompatActivity() {
         }
     }
 
+    @UnstableApi
     private fun getListMediaSources(): MutableList<MediaItem> {
         //get radio stations from sql local
         val list = mutableListOf<MediaItem>()
@@ -294,6 +296,7 @@ class HomeScreen : AppCompatActivity() {
                         .setTitle(id.name)
                         .setArtist(getString(R.string.app_mi_radio_yopal_noti))
                         .setArtworkUri(id.photo.toUri())
+                        .setDurationMs(C.DATA_TYPE_MEDIA_PROGRESSIVE_LIVE.toLong())
                         .build()
                 )
                 .setLiveConfiguration(
@@ -352,8 +355,7 @@ class HomeScreen : AppCompatActivity() {
                 binding.root,
                 "No podras recibir notificaciones",
                 Snackbar.LENGTH_LONG
-            )
-                .show()
+            ).show()
         }
     }
 
