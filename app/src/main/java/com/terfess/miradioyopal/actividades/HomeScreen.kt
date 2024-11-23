@@ -9,9 +9,14 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import android.view.ViewStub
+import android.widget.ImageButton
+import android.widget.LinearLayout
+import android.widget.ProgressBar
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import androidx.lifecycle.MutableLiveData
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -22,6 +27,7 @@ import androidx.media3.session.SessionToken
 import androidx.recyclerview.widget.GridLayoutManager
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 import com.google.common.util.concurrent.ListenableFuture
@@ -37,46 +43,80 @@ class HomeScreen : AppCompatActivity() {
     lateinit var binding: ActivityHomeScreenBinding
     private lateinit var controllerFuture: ListenableFuture<MediaController>
 
+    private lateinit var lyReproductor: LinearLayout
+    private lateinit var btnPlay: ImageButton
+    private lateinit var loadProgress: ProgressBar
+    private lateinit var btnPower: FloatingActionButton
+
+    val contextActivity = this
+
+    object SharedData {
+        val valueClose = MutableLiveData<Boolean>()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         binding = ActivityHomeScreenBinding.inflate(layoutInflater)
         setContentView(binding.root)
         super.onCreate(savedInstanceState)
 
         //ads
-        MobileAds.initialize(this) {}
-        val mAdView = binding.adView
-        val adRequest = AdRequest.Builder().build()
-        mAdView.loadAd(adRequest)
-        //
+        loadAds()
 
-        //base de datos local
+        // Initialize views elements
+        iniElementsBinding()
+
+        // Local database
         val db = BaseSql(this)
         val dataList = db.obtenerListaRadios()
 
-
-        //recycler radios
+        // Recicler Stations
         val cajaRadios = binding.cajaRadios
         cajaRadios.layoutManager = GridLayoutManager(this, 2)
         cajaRadios.adapter = AdapterHolderRadios(this, dataList, this, binding.root)
 
-        //si android mayor a 13 pedir permiso notificacion
+        // If android version upper than 13 request notification permission
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             pedirPermisoNotificacion()
         }
+
+        SharedData.valueClose.observe(this@HomeScreen) {
+            if (it) closeService()
+        }
+
+        btnPower.setOnClickListener {
+            closeService()
+        }
+
+    }
+
+    private fun iniElementsBinding() {
+        lyReproductor = binding.infoReproduccion
+        btnPlay = binding.play
+        loadProgress = binding.cargando
+        btnPower = binding.btnPower
+    }
+
+    private fun loadAds() {
+        MobileAds.initialize(this) {}
+        val mAdView = binding.adView
+
+        val adRequest = AdRequest.Builder().build()
+        mAdView.loadAd(adRequest)
     }
 
 
     fun starPlayer(radio: DatoStationLocal) {
         //hide errorAlert
         binding.errorAlert.visibility = View.GONE
-        binding.infoReproduccion.visibility = View.VISIBLE
+        lyReproductor.visibility = View.VISIBLE
 
-        //crear sessiontoken a audioservicio
+        // Start session token on Service
         val sessionToken =
             SessionToken(this, ComponentName(this, AudioService::class.java))
 
         controllerFuture =
             MediaController.Builder(this, sessionToken).buildAsync()
+
         controllerFuture.addListener({
 
             val mediaController = controllerFuture.get()
@@ -91,11 +131,7 @@ class HomeScreen : AppCompatActivity() {
             mediaController.prepare()
             mediaController.play()
 
-            //controllers layout
-            val loadProgress = binding.cargando
-            val playButton = binding.play
-
-            playButton.setOnClickListener {
+            btnPlay.setOnClickListener {
                 //hide errorAlert
                 binding.errorAlert.visibility = View.GONE
 
@@ -106,23 +142,36 @@ class HomeScreen : AppCompatActivity() {
                     mediaController.play()
 
                     loadProgress.visibility = View.VISIBLE
-                    playButton.visibility = View.GONE
+                    btnPlay.visibility = View.GONE
+
                     if (mediaController.isPlaying) {
                         loadProgress.visibility = View.GONE
-                        playButton.visibility = View.VISIBLE
+                        btnPlay.visibility = View.VISIBLE
                     }
                 }
             }
 
-            binding.infoReproduccion.visibility = View.VISIBLE
-
+            lyReproductor.visibility = View.VISIBLE
 
             mediaController.addListener(object : Player.Listener {
 
+                fun myLocalListener() {
+
+                }
+
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
+                    if (
+                        mediaController.isPlaying
+                        || mediaController.playWhenReady
+                        || mediaController.isLoading
+                    ) {
+                        btnPower.visibility = View.VISIBLE
+                    }
+
+
                     if (isPlaying) {
                         // Active playback.
-                        playButton.setImageResource(R.drawable.ic_pausa)
+                        btnPlay.setImageResource(R.drawable.ic_pausa)
 
                         //hide errorAlert
                         binding.errorAlert.visibility = View.GONE
@@ -135,15 +184,16 @@ class HomeScreen : AppCompatActivity() {
                             append(mediaData?.mediaMetadata?.title)
                         })
 
-                        binding.infoReproduccion.visibility = View.VISIBLE
+                        lyReproductor.visibility = View.VISIBLE
                     } else {
-                        playButton.setImageResource(R.drawable.ic_play)
+                        btnPlay.setImageResource(R.drawable.ic_play)
 
                         mediaController.stop() //stop each time for at reanudar research the station
                         mediaController.prepare()
+
                         if (mediaController.playWhenReady) {
                             loadProgress.visibility = View.VISIBLE
-                            playButton.visibility = View.GONE
+                            btnPlay.visibility = View.GONE
                             textoDireccional(getString(R.string.buscando))
                         }
                     }
@@ -154,7 +204,7 @@ class HomeScreen : AppCompatActivity() {
                     // Actualiza la visibilidad del estado de carga cuando cambia el estado de reproducción del reproductor
                     if (state == Player.STATE_READY && mediaController.isPlaying) {
                         // El reproductor está listo para reproducir pero aún no ha comenzado
-                        binding.play.visibility = View.VISIBLE
+                        btnPlay.visibility = View.VISIBLE
                         binding.cargando.visibility = View.GONE
                     }
 
@@ -167,6 +217,7 @@ class HomeScreen : AppCompatActivity() {
                         }
                         println("Estate ended evitar next")
                     }
+
                 }
 
                 //on player error signal
@@ -199,6 +250,7 @@ class HomeScreen : AppCompatActivity() {
                             val errorMessage = getString(R.string.error_base)
                             radioError(errorMessage)
                             mediaController.playWhenReady = true
+                            mediaController.play()
                         }
                     }
                 }
@@ -222,8 +274,8 @@ class HomeScreen : AppCompatActivity() {
         val errorBase = getString(R.string.error_base)
         if (errorMessage != errorBase) {
             binding.cargando.visibility = View.GONE
-            binding.play.visibility = View.VISIBLE
-            binding.play.setImageResource(R.drawable.ic_play)
+            btnPlay.visibility = View.VISIBLE
+            btnPlay.setImageResource(R.drawable.ic_play)
         }
     }
 
@@ -332,12 +384,19 @@ class HomeScreen : AppCompatActivity() {
         binding.textoHorizontal.isSelected = true
     }
 
+    private fun closeService() {
+        lyReproductor.visibility = View.GONE
+        btnPower.visibility = View.GONE
+
+        stopService(Intent(this, AudioService::class.java))
+        controllerFuture.get().release()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
 
         //detener el servicio de musica
         stopService(Intent(this, AudioService::class.java))
     }
-
 
 }

@@ -9,6 +9,7 @@ import android.widget.ImageButton
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
@@ -64,7 +65,6 @@ class AdapterHolderRadios(
         private val functions = homeScreenInstance
         //
 
-
         fun bind(item: DatoStationLocal, contexto: Context) {
             //set radio name
             nameRadio.text = item.name
@@ -118,6 +118,10 @@ class AdapterHolderRadios(
                     println("Click no valido")
                 }
             }
+
+            HomeScreen.SharedData.valueClose.observe(homeScreenInstance.contextActivity, Observer {
+                if (it) removeFocusRadio()
+            })
         }
 
         private fun onSelectRadio() {
