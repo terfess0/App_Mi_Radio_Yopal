@@ -9,13 +9,15 @@ import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
-import android.view.ViewStub
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import androidx.core.view.GravityCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -88,6 +90,11 @@ class HomeScreen : AppCompatActivity() {
             closeService()
         }
 
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                wantOut()
+            }
+        })
     }
 
     private fun iniElementsBinding() {
@@ -399,6 +406,19 @@ class HomeScreen : AppCompatActivity() {
 
         //detener el servicio de musica
         stopService(Intent(this, AudioService::class.java))
+    }
+
+    private fun wantOut() {
+        val builder = AlertDialog.Builder(this@HomeScreen)
+        builder.setTitle("Salir")
+        builder.setMessage("¿Seguro que quieres salir?")
+            .setPositiveButton("Sí") { _, _ ->
+                // Finish on confirm
+                finishAffinity()
+            }
+        builder.setNegativeButton("No") { _, _ -> }
+        val dialog = builder.create()
+        dialog.show()
     }
 
 }

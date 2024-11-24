@@ -11,21 +11,18 @@ import com.terfess.miradioyopal.recycler_view.DatosLocal
 import com.terfess.miradioyopal.recycler_view.ObtenerRadios
 import com.terfess.miradioyopal.servicios.BaseSql
 
-class SplashScreen : AppCompatActivity(){
+class SplashScreen : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val splashScreen = installSplashScreen()
+        installSplashScreen()
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash_screen)
 
-        //splash
-        splashScreen.setKeepOnScreenCondition { true }
-
         val intent = Intent(this, HomeScreen::class.java)
 
         val db = BaseSql(this)
-        val versionLocal= db.obtenerVersionDb()
+        val versionLocal = db.obtenerVersionDb()
 
         val firebase = FirebaseFirestore.getInstance()
 
@@ -37,12 +34,12 @@ class SplashScreen : AppCompatActivity(){
                 if (document != null && document.exists()) {
                     val versionNube = document.getLong("version")
 
-                    if (versionLocal < versionNube!!.toInt()){
+                    if (versionLocal < versionNube!!.toInt()) {
                         //descargar radios
                         db.onUpgrade(db.readableDatabase, versionLocal, versionNube.toInt())
-                        ObtenerRadios().obtenerDatos(object : DatosLocal{
+                        ObtenerRadios().obtenerDatos(object : DatosLocal {
                             override fun guardar(datos: List<DatoStation>) {
-                                for (dato in datos){
+                                for (dato in datos) {
                                     db.agregarRadio(dato)
                                 }
 

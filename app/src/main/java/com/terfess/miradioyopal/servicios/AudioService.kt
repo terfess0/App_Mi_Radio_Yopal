@@ -162,18 +162,10 @@ class AudioService : MediaSessionService() {
     // release the player and media session in onDestroy
     override fun onDestroy() {
         super.onDestroy()
-//        relaunchApp(this, SplashScreen::class.java)
         player.release()
         mediaSession?.release()
         stopSelf() // stop the service
         println("terminado")
-    }
-
-    private fun relaunchApp(context: Context, targetActivity: Class<*>) {
-        val intent = Intent(context, targetActivity)
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        context.startActivity(intent)
-        println("relanzando")
     }
 
 }
