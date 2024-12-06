@@ -14,4 +14,15 @@
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
         <item name="postSplashScreenTheme">@style/Theme.MiRadioYopal</item>
     </style>
+
+    <style name="Theme.BottomSheetTheme" parent="Theme.Design.BottomSheetDialog">
+        <item name="elevation">2dp</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:colorBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="fontFamily">sans-serif-condensed</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowIsTranslucent">true</item> <!-- Ajusta según sea necesario -->
+    </style>
 </resources>

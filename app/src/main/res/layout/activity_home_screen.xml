@@ -118,6 +118,14 @@
                 android:src="@drawable/ic_pausa" />
 
             <ImageButton
+                android:id="@+id/chat_opcion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="5dp"
+                android:background="@android:color/transparent"
+                android:src="@android:drawable/stat_notify_chat" />
+
+            <ImageButton
                 android:id="@+id/facebook_opcion"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

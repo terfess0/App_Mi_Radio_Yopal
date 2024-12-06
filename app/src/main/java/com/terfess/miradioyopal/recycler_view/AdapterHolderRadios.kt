@@ -18,10 +18,11 @@ import com.google.android.material.snackbar.Snackbar
 import com.terfess.miradioyopal.R
 import com.terfess.miradioyopal.actividades.HomeScreen
 import com.terfess.miradioyopal.databinding.ActivityHomeScreenBinding
+import com.terfess.miradioyopal.servicios.room.model.Station
 
 class AdapterHolderRadios(
     private val context: Context,
-    private val itemList: List<DatoStationLocal>,
+    private val itemList: List<Station>,
     var homeScreenInstance: HomeScreen,
     var vista: View
 ) :
@@ -65,7 +66,7 @@ class AdapterHolderRadios(
         private val functions = homeScreenInstance
         //
 
-        fun bind(item: DatoStationLocal, contexto: Context) {
+        fun bind(item: Station, contexto: Context) {
             //set radio name
             nameRadio.text = item.name
 

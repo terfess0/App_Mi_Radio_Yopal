@@ -4,6 +4,7 @@ plugins {
 
     // Add the Google services Gradle plugin
     id("com.google.gms.google-services")
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -14,8 +15,8 @@ android {
         applicationId = "com.terfess.miradioyopal"
         minSdk = 21
         targetSdk = 34
-        versionCode = 7
-        versionName = "1.0.6"
+        versionCode = 9
+        versionName = "1.0.8"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -84,4 +85,8 @@ dependencies {
     implementation("androidx.media3:media3-ui:1.4.0")
     implementation("androidx.media3:media3-common:1.4.0")
 
+    // room for database local
+    val room_version = "2.6.1"
+    implementation("androidx.room:room-ktx:$room_version")
+    ksp("androidx.room:room-compiler:$room_version")
 }

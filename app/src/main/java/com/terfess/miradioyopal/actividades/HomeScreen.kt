@@ -2,22 +2,24 @@ package com.terfess.miradioyopal.actividades
 
 import android.Manifest
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
-import androidx.core.view.GravityCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
@@ -28,19 +30,33 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.MobileAds
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.terfess.miradioyopal.R
+import com.terfess.miradioyopal.chat_radio.model.ChatMessage
+import com.terfess.miradioyopal.chat_radio.recycler.ChatAdapter
 import com.terfess.miradioyopal.databinding.ActivityHomeScreenBinding
+import com.terfess.miradioyopal.databinding.BtnSheetChatBinding
 import com.terfess.miradioyopal.recycler_view.AdapterHolderRadios
 import com.terfess.miradioyopal.recycler_view.DatoStationLocal
 import com.terfess.miradioyopal.servicios.AudioService
 import com.terfess.miradioyopal.servicios.BaseSql
+import com.terfess.miradioyopal.servicios.room.AppDatabase
+import com.terfess.miradioyopal.servicios.room.model.Station
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class HomeScreen : AppCompatActivity() {
     lateinit var binding: ActivityHomeScreenBinding
@@ -50,6 +66,7 @@ class HomeScreen : AppCompatActivity() {
     private lateinit var btnPlay: ImageButton
     private lateinit var loadProgress: ProgressBar
     private lateinit var btnPower: FloatingActionButton
+    private lateinit var dbFirebase: FirebaseFirestore
 
     val contextActivity = this
 
@@ -68,14 +85,22 @@ class HomeScreen : AppCompatActivity() {
         // Initialize views elements
         iniElementsBinding()
 
+        // Firebase
+        dbFirebase = FirebaseFirestore.getInstance()
+
         // Local database
-        val db = BaseSql(this)
-        val dataList = db.obtenerListaRadios()
+        val db by lazy { AppDatabase.getDatabase(this) }
 
         // Recicler Stations
         val cajaRadios = binding.cajaRadios
         cajaRadios.layoutManager = GridLayoutManager(this, 2)
-        cajaRadios.adapter = AdapterHolderRadios(this, dataList, this, binding.root)
+
+        var dataList: List<Station> = emptyList()
+        CoroutineScope(Dispatchers.Default).launch {
+            dataList = db.stationDao().getAllStation()
+            cajaRadios.adapter =
+                AdapterHolderRadios(this@HomeScreen, dataList, this@HomeScreen, binding.root)
+        }
 
         // If android version upper than 13 request notification permission
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -87,6 +112,7 @@ class HomeScreen : AppCompatActivity() {
         }
 
         btnPower.setOnClickListener {
+            SharedData.valueClose.postValue(true)
             closeService()
         }
 
@@ -113,7 +139,13 @@ class HomeScreen : AppCompatActivity() {
     }
 
 
-    fun starPlayer(radio: DatoStationLocal) {
+    fun starPlayer(radio: Station) {
+        //set playlist radios on the player
+        var lista: MutableList<MediaItem> = mutableListOf()
+        CoroutineScope(Dispatchers.Default).launch {
+            lista = getListMediaSources()
+        }
+
         //hide errorAlert
         binding.errorAlert.visibility = View.GONE
         lyReproductor.visibility = View.VISIBLE
@@ -130,12 +162,10 @@ class HomeScreen : AppCompatActivity() {
 
             val mediaController = controllerFuture.get()
 
-            //set playlist radios on the player
-            val lista = getListMediaSources()
             mediaController.setMediaItems(lista)
 
             //start on selected radio
-            mediaController.seekTo(radio.id - 1, 0)
+            mediaController.seekTo(radio.idStation - 1, 0)
 
             mediaController.prepare()
             mediaController.play()
@@ -265,6 +295,9 @@ class HomeScreen : AppCompatActivity() {
 
             })
 
+            binding.chatOpcion.setOnClickListener {
+                setRadioChat()
+            }
 
             // MediaController is available here with controllerFuture.get()
         }, MoreExecutors.directExecutor())
@@ -287,13 +320,14 @@ class HomeScreen : AppCompatActivity() {
         }
     }
 
-    @UnstableApi
+    @OptIn(UnstableApi::class)
     private fun getListMediaSources(): MutableList<MediaItem> {
         //get radio stations from sql local
         val list = mutableListOf<MediaItem>()
 
-        val sqlBase = BaseSql(this)
-        val radios = sqlBase.obtenerListaRadios()
+        val roomDB by lazy { AppDatabase.getDatabase(this) }
+
+        val radios = roomDB.stationDao().getAllStation()
 
         for (id in radios) {
             val station = MediaItem.Builder()
@@ -388,6 +422,88 @@ class HomeScreen : AppCompatActivity() {
         }
     }
 
+    private var messages = mutableListOf<ChatMessage>()
+
+    fun setRadioChat() {
+        // Inflar el binding del BottomSheet
+        val binding1chat = BtnSheetChatBinding.inflate(layoutInflater)
+
+        val recyclerView = binding1chat.chatRecyclerView
+        val messageInput = binding1chat.messageInput
+        val sendButton = binding1chat.sendButton
+
+        // Configurar RecyclerView y Adapter
+        val chatAdapter = ChatAdapter(messages)
+        recyclerView.layoutManager = LinearLayoutManager(this).apply {
+            stackFromEnd = true
+        }
+        recyclerView.adapter = chatAdapter
+
+        // Crear y configurar el BottomSheetDialog
+        val btnSheetDialog = BottomSheetDialog(this, R.style.Theme_BottomSheetTheme)
+        btnSheetDialog.setContentView(binding1chat.root)
+
+        // Configurar el comportamiento del BottomSheet
+        val bottomSheet =
+            btnSheetDialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+        bottomSheet?.let {
+            val behavior = BottomSheetBehavior.from(it)
+            behavior.state = BottomSheetBehavior.STATE_COLLAPSED
+        }
+
+        // Mostrar el BottomSheetDialog
+        btnSheetDialog.show()
+
+        val roomId = "1piedemonte_radio_tv"
+
+        // Enviar mensajes
+        sendButton.setOnClickListener {
+            val messageText = messageInput.text.toString().trim()
+            if (messageText.isNotEmpty()) {
+                val chatMessage = ChatMessage(
+                    user = "User1", // Cambia según el usuario actual
+                    message = messageText,
+                    timestamp = System.currentTimeMillis() // Agrega un timestamp
+                )
+
+                // Guardar el mensaje en Firestore
+                dbFirebase.collection("radios").document(roomId).collection("messages")
+                    .add(chatMessage)
+                    .addOnSuccessListener {
+                        messageInput.text.clear()
+                        Log.d("ChatRadio", "Mensaje enviado correctamente")
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("ChatRadio", "Error al enviar el mensaje", e)
+                    }
+            }
+        }
+
+        // Escuchar cambios en la colección de mensajes
+        dbFirebase.collection("radios").document(roomId).collection("messages")
+            .orderBy("timestamp", Query.Direction.ASCENDING)
+            .addSnapshotListener { snapshots, e ->
+                if (e != null) {
+                    Log.w("ChatRadio", "Listen failed.", e)
+                    return@addSnapshotListener
+                }
+
+                // Actualizar mensajes
+                if (snapshots != null) {
+                    messages.clear() // Limpia la lista para evitar duplicados
+                    for (doc in snapshots.documents) {
+                        val message = doc.toObject(ChatMessage::class.java)
+                        if (message != null) {
+                            messages.add(message)
+                        }
+                    }
+                    chatAdapter.notifyDataSetChanged()
+                    recyclerView.scrollToPosition(messages.size - 1)
+                }
+            }
+    }
+
+
     fun textoDireccional(texto: String) {
         binding.textoHorizontal.text = texto
         binding.textoHorizontal.isSelected = true
@@ -421,4 +537,15 @@ class HomeScreen : AppCompatActivity() {
         dialog.show()
     }
 
+    fun getScreenPercentDp(
+        context: Context,
+        percent: Double
+    ): Int {
+        // Get screen height
+        val displayMetrics = context.resources.displayMetrics
+        val screenHeight = displayMetrics.heightPixels
+
+        // Calculate percent height
+        return (screenHeight * percent).toInt()
+    }
 }
