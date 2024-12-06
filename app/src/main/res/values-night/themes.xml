@@ -2,6 +2,8 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.MiRadioYopal" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">#0B1D49</item>
+        <item name="colorSecondary">#0B1D49</item>
+        <item name="titleTextColor">@color/white</item>
         <item name="elevation">1dp</item>
     </style>
 

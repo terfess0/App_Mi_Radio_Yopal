@@ -10,4 +10,7 @@
     <string name="error_source_station">Al parecer, la señal de esta radio online (%1$s) está inactiva. Inténtalo más tarde o selecciona otra.</string>
     <string name="error_base">Algo salió mal, reintentando...</string>
     <string name="baseTextDireccional">Selecciona una radio</string>
+    <string name="escribe_un_mensaje">Escribe un mensaje</string>
+    <string name="este_es_el_chat_para_oyentes_de">Este es el chat en vivo para oyentes de %1$s</string>
+    <string name="no_hay_mensajes_a_n_env_a_uno_para_comenzar_la_conversaci_n">No hay mensajes aún. Envía uno para comenzar la conversación</string>
 </resources>

@@ -3,14 +3,11 @@ package com.terfess.miradioyopal.actividades
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.Toast
 import com.terfess.miradioyopal.R
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.google.firebase.firestore.FirebaseFirestore
-import com.terfess.miradioyopal.recycler_view.DatoStation
 import com.terfess.miradioyopal.recycler_view.DatosLocal
 import com.terfess.miradioyopal.recycler_view.ObtenerRadios
-import com.terfess.miradioyopal.servicios.BaseSql
 import com.terfess.miradioyopal.servicios.room.AppDatabase
 import com.terfess.miradioyopal.servicios.room.model.Station
 import com.terfess.miradioyopal.servicios.room.model.Version
@@ -32,7 +29,6 @@ class SplashScreen : AppCompatActivity() {
         val intent = Intent(this, HomeScreen::class.java)
 
         val nombreDocumento = "1"
-
 
 
         firebase.collection("datos_funcionales").document(nombreDocumento)

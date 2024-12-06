@@ -43,7 +43,7 @@ class AdapterHolderRadios(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = itemList[position]
-        holder.bind(item, context)
+        holder.bind(item, context, position)
     }
 
 
@@ -66,7 +66,7 @@ class AdapterHolderRadios(
         private val functions = homeScreenInstance
         //
 
-        fun bind(item: Station, contexto: Context) {
+        fun bind(item: Station, contexto: Context, position: Int) {
             //set radio name
             nameRadio.text = item.name
 
@@ -94,7 +94,7 @@ class AdapterHolderRadios(
                     binding.play.visibility = View.GONE
 
                     //start sound player
-                    functions.starPlayer(item)
+                    functions.starPlayer(position)
 
                     //On click go facebook option
                     facebook.setOnClickListener {

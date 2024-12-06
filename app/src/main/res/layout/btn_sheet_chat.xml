@@ -1,10 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:background="@color/white"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@drawable/borde_reproduccion"
+    android:backgroundTint="?attr/colorSecondary"
+    android:orientation="vertical"
+    android:paddingHorizontal="10dp">
+
+    <TextView
+        android:id="@+id/chatTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:textColor="@color/color_primario"
+        android:textSize="8sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/noChats"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/no_hay_mensajes_a_n_env_a_uno_para_comenzar_la_conversaci_n"
+        android:textAlignment="center"
+        android:textColor="@color/color_segundario"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/chatRecyclerView"
@@ -14,23 +35,27 @@
         android:padding="8dp" />
 
     <LinearLayout
-        android:elevation="3dp"
-        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:elevation="3dp"
+        android:orientation="horizontal">
 
         <EditText
             android:id="@+id/messageInput"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Type a message"
-            android:padding="8dp" />
+            android:hint="@string/escribe_un_mensaje"
+            android:maxLength="100"
+            android:padding="8dp"
+            android:textColor="?attr/titleTextColor"
+            android:textColorHint="@color/gris" />
 
         <Button
             android:id="@+id/sendButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Sendi" />
+            android:backgroundTint="@color/color_primario"
+            android:text="Enviar" />
     </LinearLayout>
 </LinearLayout>
