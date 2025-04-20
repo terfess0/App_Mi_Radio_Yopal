@@ -37,7 +37,7 @@
 
 ## Licencia
 
-Este proyecto está licenciado bajo la Licencia MIT - ver el archivo [LICENSE](./LICENSE) para más detalles.
+Este proyecto está licenciado bajo la licencia GNU v3.0 - ver el archivo [LICENSE](./LICENSE) para más detalles.
 
 ## Soporte/Contacto
 
